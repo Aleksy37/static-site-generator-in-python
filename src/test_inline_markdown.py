@@ -214,7 +214,7 @@ class TestSplitDelimiter(unittest.TestCase):
                 TextNode("This is text with an ", TextType.TEXT),
                 TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
             ],
-            new_nodes,
+            new_nodes
         )
 
    def test_split_image_single(self):
@@ -227,7 +227,7 @@ class TestSplitDelimiter(unittest.TestCase):
             [
                 TextNode("image", TextType.IMAGE, "https://www.example.COM/IMAGE.PNG"),
             ],
-            new_nodes,
+            new_nodes
         )
 
    def test_split_images(self):
@@ -245,8 +245,51 @@ class TestSplitDelimiter(unittest.TestCase):
                     "second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"
                 ),
             ],
-            new_nodes,
+            new_nodes
         )
+   
+   def test_split_no_image(self):
+      node = TextNode(
+         "This is just a text node with no image", TextType.TEXT
+      )
+      new_nodes = split_nodes_image([node])
+      self.assertListEqual(
+         [
+            TextNode("This is just a text node with no image", TextType.TEXT)
+         ],
+         new_nodes
+      )
+   
+   def test_split_image_non_text_input(self):
+      node = TextNode(
+         "This is a **non text input node**", TextType.BOLD
+      )
+      new_nodes = split_nodes_image([node])
+      self.assertListEqual(
+         [
+            TextNode("This is a **non text input node**", TextType.BOLD)
+         ],
+         new_nodes
+      )
+
+   def test_split_image_multiple_nodes(self):
+      nodes = [
+         TextNode("This is a **non text input node**", TextType.BOLD),
+         TextNode("This is text with an ![image](https://i.imgur.com/zjjcJKZ.png) and another ![second image](https://i.imgur.com/3elNhQu.png)",TextType.TEXT),
+         TextNode("[link](https://boot.dev)", TextType.TEXT)
+      ]
+      new_nodes = split_nodes_image(nodes)
+      self.assertListEqual(
+         [
+         TextNode("This is a **non text input node**", TextType.BOLD),
+         TextNode("This is text with an ", TextType.TEXT),
+         TextNode("image", TextType.IMAGE, "https://i.imgur.com/zjjcJKZ.png"),
+         TextNode(" and another ", TextType.TEXT),
+         TextNode("second image", TextType.IMAGE, "https://i.imgur.com/3elNhQu.png"),
+         TextNode("[link](https://boot.dev)", TextType.TEXT)
+         ],
+         new_nodes
+      )
 
    def test_split_links(self):
         node = TextNode(
@@ -262,6 +305,48 @@ class TestSplitDelimiter(unittest.TestCase):
                 TextNode("another link", TextType.LINK, "https://blog.boot.dev"),
                 TextNode(" with text that follows", TextType.TEXT),
             ],
-            new_nodes,
+            new_nodes
         )
+      
+   def test_split_just_link(self):
+      node = TextNode("[alt](url)", TextType.TEXT)
+      new_nodes = split_nodes_link([node])
+      self.assertListEqual(
+         [TextNode("alt", TextType.LINK, "url")],
+         new_nodes
+      )
+
+   def test_split_link_image_input(self):
+      node = TextNode("![image](url)", TextType.TEXT)
+      new_nodes = split_nodes_link([node])
+      self.assertListEqual(
+         [TextNode("![image](url)", TextType.TEXT)],
+         new_nodes
+      )
+   
+   def test_split_link_non_text_input(self):
+      node = TextNode("This is a **bold** node", TextType.BOLD)
+      new_nodes = split_nodes_link([node])
+      self.assertListEqual(
+         [TextNode("This is a **bold** node", TextType.BOLD)],
+         new_nodes
+      )
     
+   def test_split_links_multiple_nodes(self):
+      nodes = [
+         TextNode("This is a **non text input node**", TextType.BOLD),
+         TextNode("This is text with a [link](https://google.com) and another [second link](https://boot.dev)",TextType.TEXT),
+         TextNode("![image](url)", TextType.TEXT)
+      ]
+      new_nodes = split_nodes_link(nodes)
+      self.assertListEqual(
+         [
+         TextNode("This is a **non text input node**", TextType.BOLD),
+         TextNode("This is text with a ", TextType.TEXT),
+         TextNode("link", TextType.LINK, "https://google.com"),
+         TextNode(" and another ", TextType.TEXT),
+         TextNode("second link", TextType.LINK, "https://boot.dev"),
+         TextNode("![image](url)", TextType.TEXT)
+         ],
+         new_nodes
+      )
